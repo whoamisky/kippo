@@ -1,0 +1,74 @@
+0x01: 测试环境
+CentOS release 6.2 (Final)
+Linux www.centos.com 2.6.32-220.el6.x86_64 #1 SMP Tue Dec 6 19:48:22 GMT 2011 x86_64 x86_64 x86_64 GNU/Linux
+
+0x02:搭建
+cd /home/
+wget https://codeload.github.com/desaster/kippo/zip/master
+unzip master
+yum install twisted python-zope-interface python-pyasn1
+mv kippo-master kippo
+useradd kippo
+chown -R kippo:kippo
+cd kippo
+cp kippo.cfg.dist kippo.cfg
+#监听本地的2222端口
+#提前修改正常ssh的端口,加一条防火墙规则,把22端口转到2222
+iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-ports 2222
+
+#日志存放到数据库
+yum install mysql mysql-server
+/etc/init.d/mysqld start
+mysql -uroot 
+create database kippo;
+GRANT ALL ON kippo.* to 'kippo'@'localhost' identified by 'kippo';
+
+修改配置文件kippo.cfg
+[database_mysql]
+host = localhost
+database = kippo
+username = kippo
+password = kippo
+port = 3306
+
+mysql -ukippo -p -Dkippo < /home/kippo/doc/sql/mysql.sql
+
+#安装python-mysql
+yum -y install python-devel mysql-devel
+wget http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz
+tar -zxvf setuptools-0.6c11.tar.gz
+cd setuptools-0.6c11
+python2.6 setup.py build
+python2.6 setup.py install
+wget https://pypi.python.org/packages/source/M/MySQL-python/MySQL-python-1.2.5.zip
+Unzip MySQL-python-1.2.5.zip
+Cd MySQL-python
+修改site.cfg的mysql_config一行取消注释
+mysql_config = /usr/lib64/mysql/mysql_config
+
+python2.6 setup.py build
+python2.6 setup.py install
+
+
+0x03:图形化
+yum install httpd php php-mysql php-gd php-curl
+#1.3的php版本要求高,要自己编译,还是用yum的,装个低版本的
+wget http://bruteforce.gr/wp-content/uploads/kippo-graph-1.2.tar.gz
+tar -zxf kippo-graph-1.2.tar.gz 
+mv kippo-graph-1.2 /var/www/html/kippo
+cd /var/www/html/kippo
+cp config.php.dist config.php
+vim config.php
+define('DIR_ROOT', '/var/www/html/kippo');  
+define('DB_HOST', 'localhost');
+define('DB_USER', 'kippo');
+define('DB_PASS', 'kippo');
+define('DB_NAME', 'kippo');
+define('DB_PORT', '3306'); 
+
+chmod 777 /var/www/html/kippo/generated-graphs/
+/etc/init.d/http start
+su - kippo
+./start.sh
+访问http://ip/kippo
+

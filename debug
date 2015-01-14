@@ -1,0 +1,10 @@
+时间显示存在问题
+使用了0时区的时间,这里是东8区
+vim /home/kippo/kippo/core/dblog.py
+def nowUnix(self):
+	"""return the current UTC time as an UNIX timestamp"""
+	#原系统用的时区是0时区的
+	#return int(time.mktime(time.gmtime()[:-1] + (-1,)))
+	#return int(time.mktime(time.gmtime()[:-1] + (-1,))) + 28800
+	return int(time.time())
+
